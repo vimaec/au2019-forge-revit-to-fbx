@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage SchemaVersion="1.0"
+					AutodeskProduct="3ds Max"
+					ProductType="Application"
+					ProductCode="Simple export to FBX">
+<CompanyDetails />
+	<Components Description="pre-start-up scripts parts">
+		<RuntimeRequirements OS="Win64" Platform="3ds Max" SeriesMin="2020" SeriesMax="2020" />
+		<ComponentEntry AppName="Export-FBX-Scripts" Version="1.0.0"  ModuleName="./Content/functions.ms" />
+	</Components>
+</ApplicationPackage>

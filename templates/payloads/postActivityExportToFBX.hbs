@@ -1,0 +1,142 @@
+{
+    "id": "{{activityId}}",
+    "commandLine": "$(engine.path)/3dsmaxbatch.exe \"$(settings[script].path)\" -mxsString input:\"@$(args[InputFile].path)\" ",
+    "description": "Export a single max file to FBX",
+    "appbundles": [
+        "{{nickname}}.{{appId}}+{{appAlias}}"
+    ],
+    "engine" : "{{engineId}}",
+    "parameters": {
+        "InputFile" : {
+            "zip": false,
+            "description": "Input Revit file",
+            "ondemand": false,
+            "required": true,
+            "verb": "get",
+            "localName": "input.rvt"
+        },
+        "OutputFile": {
+            "zip": false,
+            "ondemand": false,
+            "verb": "put",
+            "description": "Output FBX file",
+            "required": true,
+            "localName": "output.fbx"
+        },
+    },
+    "settings": {
+        "script": "
+-- Inspired by http://www.scriptspot.com/3ds-max/scripts/architecture-to-standard-material-converter
+fn convertAdskMap inMap = 
+(
+	if not isKindOf inMap Autodesk_Map do
+	(
+		return inMap
+	)
+	outMap = bitmaptexture()
+
+	outMap.name = inmap.name
+	outMap.coords.realWorldScale = on
+	
+	outMap.coords.U_Offset = inMap.Position_X
+	outMap.coords.V_Offset = inMap.Position_Y
+	
+	--Noise has not Scale_Width
+	if hasProperty inMap \"Scale_Width\"  do (
+		outMap.coords.U_Tiling = 1/inMap.Scale_Width -- for some reason these have to be inverted
+		outMap.coords.V_Tiling = 1/inMap.Scale_Height -- for some reason these have to be inverted	
+	)
+	if hasProperty inMap \"Repeat_Vertical\" do (
+		outmap.coordinates.U_Tile = inMap.Repeat_Vertical
+		outMap.coordinates.V_Tile = inMap.Repeat_Horizontal
+		outMap.coords.W_angle = inMap.Position_Rotation
+	)
+	
+	if hasProperty inMap \"Advanced_Parameters_Map_Channel\" do (
+		outMap.coordinates.mapChannel = inMap.Advanced_Parameters_Map_Channel
+	)
+	
+	outMap.coords.realWorldScale = off -- use RWS settings but prevent rescaling bug
+	
+ 	try (outmap.bitmap = inmap.Parameters_Source)
+ 	catch (\"No path for [\" + inMap.name as string + \"]. Please convert manually.\")
+	
+	return outMap
+)
+
+fn convertAdskMtl mtl = 
+(
+    inMat = mtl.ConvertToGeneric
+
+	outMat = StandardMaterial()	
+	outMat.name = mtl.name
+	
+	-- Diffuse
+	outMat.Diffuse = inMat.Generic_Color -- transfer diffuse color swatch
+	outMat.diffuseMap = (convertAdskMap inMat.Generic_Image) -- transfer diffuse map
+	outMat.diffuseMapAmount = inMat.Generic_Image_Fade -- blend with base color
+	
+	-- Gloss
+	outMat.glossiness = inMat.Generic_Glossiness -- gloss slider
+	outMat.glossinessMap = (convertAdskMap inMat.Generic_Glossiness_Map) -- gloss texture
+	
+	-- Reflectivity -> Specular
+	outMat.specularLevel = inMat.Reflectivity_Direct -- spec level
+	outMat.Specular = color 230 230 230 -- color does not exist for autodesk generic
+	outMat.specularMap = (convertAdskMap inMat.Reflectivity_Direct_Map)
+	outMat.specularMapEnable=inMat.Reflectivity_Enable  -- set enabled last: adding a map automatically enables
+	
+	-- Transparency -> Opacity
+	-- Translucency map is not used.
+	
+    if inMat.Transparency_Enable == true then outMat.opacity = (100 - inMat.Transparency_Amount) else outMat.opacity = 100
+	-- outMat.opacityMap = inMat.Transparency_Image --- inverted. not sure if this can be done with maps
+	-- outMat.opacityMapEnable = inMat.Transparency_Enable  -- set enabled last: adding a map automatically enables
+	
+    outMat.ior = inMat.Transparency_Refraction -- This material type allows for use of index of refraction.
+	
+    outMat.bumpMap = (convertAdskMap inMat.Bump_Image)
+	outMat.bumpMapAmount = inMat.bump_amount
+	outMat.bumpMapEnable = inMat.Bump_Enable -- set enabled last: adding a map automatically enables	
+	return outMat
+)    
+
+fn convertAdskMtls = 
+(
+	adskMtls = (getClassInstances Autodesk_Material) 
+	for mtl in adskMtls do (
+		Replaceinstances mtl (convertAdskMtl mtl)
+	)
+)
+
+fn openRevitAndExportToFBX = 
+(
+	inputPath = maxOps.mxsCmdLineArgs[#input]
+
+	-- These only work in 3ds Max 2020
+	RevitImporterSetOption \"view\" \"{3D}\" -- string, default is the unsupplied value 
+    RevitImporterSetOption \"combineoption\" 0 -- range from 0 to 4, default is 0
+	RevitImporterSetOption \"material\" true -- boolean, default is True
+	RevitImporterSetOption \"camera\" true -- boolean, default is True
+	RevitImporterSetOption \"light\" false -- boolean, default is True
+	RevitImporterSetOption \"rpc\" true -- boolean, default is True
+	RevitImporterSetOption \"daylight\" false -- boolean, default is True
+	RevitImporterSetOption \"biminfo\" true -- boolean, default is False
+	RevitImporterSetOption \"fullscene\" true -- boolean, default is False
+	RevitImporterSetOption \"geometrydetail\" 5 -- range from 0 to 15, default is 8
+	RevitImporterSetOption \"viewdetail\" 2 -- range from 0 to 3, default is 0, 1 = low, 2 = medium, 3 = high,
+	RevitImporterSetOption \"extrudedetect\" true -- boolean, default is True
+	RevitImporterSetOption \"simplifymesh\" 0.25 -- range from 0.0 to 0.5, default is the unsupplied value
+	importFile inputPath #noPrompt using:Revit_Import 
+
+    convertAdskMtls ()	
+
+	outputpath = sysInfo.currentdir + \"/output.fbx\"
+	FBXExporterSetParam \"EmbedTextures\" true
+	exportFile outputpath #noPrompt using:FBXEXP
+)
+
+openRevitAndExportToFBX()
+"
+    }
+}

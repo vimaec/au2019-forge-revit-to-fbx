@@ -1,0 +1,18 @@
+{
+	"forge": {
+    "clientId": "Setup your forge client id here",
+		"clientSecret": "Setup your forge client secret here",
+		"ossBucketName": "Choose a unique OSS bucket name where the inputs and output will be uploaded must be of the form [-_.a-z0-9]{3,128} "
+	},
+  "designAutomation": {
+    "appId": "TutorialExportToFBX",
+    "appAlias": "sample",
+    "activityId": "TutorialExportToFBX",
+    "activityAlias": "sample",
+    "engineId": "Autodesk.3dsMax+2020"
+  },
+  "urls": {
+    "designAutomation": "https://developer.api.autodesk.com/da/us-east/v3"
+  },
+  "timeBetweenPolls": 5000
+}
