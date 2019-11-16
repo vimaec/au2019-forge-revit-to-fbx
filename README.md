@@ -58,6 +58,13 @@ Inside the /config folder you will see a file named ```default.json```.
 	node executeWorkitem.js C:/path/to/yourfile.rvt
 	```
 
+## Developer Notes
+
+The code for performing the work done in 3ds Max to import Revit, convert materials, and export the FBX file is performed 
+by a MAXScript script embedded in the handlebar template at: 
+https://github.com/vimaec/au2019-forge-revit-to-fbx/blob/master/templates/payloads/postActivityExportToFBX.hbs.
+
+
 ## License
 
 This sample is licensed under the terms of the [MIT License](http://opensource.org/licenses/MIT). Please see the [LICENSE](LICENSE) file for full details.
