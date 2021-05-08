@@ -4,7 +4,7 @@
     "async": "^2.6.1",
     "forge-apis": "^0.4.4",
     "form-data": "^2.3.3",
-    "handlebars": "^4.0.12",
+    "handlebars": "^4.7.7",
     "mkdirp": "^0.5.1",
     "request": "^2.88.0",
     "retry": "^0.12.0",
