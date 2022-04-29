@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "archiver": "^3.0.0",
-    "async": "^2.6.1",
+    "async": "^2.6.4",
     "forge-apis": "^0.4.4",
     "form-data": "^2.3.3",
     "handlebars": "^4.0.12",
